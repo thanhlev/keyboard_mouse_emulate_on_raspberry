@@ -99,7 +99,7 @@ class BtkStringClient():
 
             try:
                 scancode = keymap.keytable[scantablekey]
-            execpt KeyError:
+            except KeyError:
                 print("character not found in keytable:", c)
             else:
                 self.send_key_down(scancode, modifiers)
