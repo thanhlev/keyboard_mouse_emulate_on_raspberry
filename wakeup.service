@@ -1,0 +1,12 @@
+[Unit]
+Description=Wakeup_Server
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /home/woisol/Softs/keyboard_mouse_emulate_on_raspberry/server/btk_server.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+

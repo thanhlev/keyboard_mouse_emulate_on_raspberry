@@ -23,12 +23,12 @@ from bluetooth import *
 logging.basicConfig(level=logging.DEBUG)
 
 # @todo fill your host mac here manually
-TARGET_ADDRESS = ""
+TARGET_ADDRESS = "74:97:79:E3:6E:A2"
 
 class BTKbDevice():
     # change these constants
-    MY_ADDRESS = "B8:27:EB:C5:B3:27"
-    MY_DEV_NAME = "ThanhLe_Keyboard_Mouse"
+    MY_ADDRESS = "B0:AC:82:FB:BE:EC"
+    MY_DEV_NAME = "ISer"
 
     # define some constants
     P_CTRL = 17  # Service port - must match port configured in SDP record
