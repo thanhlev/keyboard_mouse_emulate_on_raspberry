@@ -1,15 +1,22 @@
 [![Build Status](https://travis-ci.com/quangthanh010290/keyboard_mouse_emulate_on_raspberry.svg?branch=master)](https://travis-ci.com/quangthanh010290/keyboard_mouse_emulate_on_raspberry)
 
-# Make things work first 
+# Make things work first
 
-## Step 1: Setup 
+## Step 1: Setup
 
 ```
  sudo ./setup.sh
 ```
- 
- 
-## Step 2: Run the Server
+
+
+## Step 2.1: Add your host mac
+
+Go to `./server/btk_server.py`, fill your host's mac address to `TARGET_ADDRESS` variable at line 26
+
+> Lazy to write at scipt, so you need to change it manually
+
+
+## Step 2.2: Run the Server
 
 ```
 sudo ./boot.sh
@@ -46,7 +53,7 @@ sudo ./boot.sh
 ./mouse/mouse_emulate.py 0 10 0 0
 ```
 
-# To understand what I'm doing in the background 
+# To understand what I'm doing in the background
 [Make Raspberry Pi3 as an emulator bluetooth keyboard](https://thanhle.me/make-raspberry-pi3-as-an-emulator-bluetooth-keyboard/)
 
 ## Keyboard setup demo (old version)
