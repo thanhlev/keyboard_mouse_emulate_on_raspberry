@@ -42,6 +42,7 @@ class BTKbDevice():
         print("2. Setting up BT device")
         self.init_bt_device()
         self.init_bluez_profile()
+        self.setup_autoconnect()
 
     # configure the bluetooth hardware device
     def init_bt_device(self):
@@ -89,9 +90,13 @@ class BTKbDevice():
         self.scontrol.bind((socket.BDADDR_ANY, self.P_CTRL))
         self.sinterrupt.bind((socket.BDADDR_ANY, self.P_INTR))
 
+    def setup_autoconnect(self):
+        print("7. Profile registered ")
+        os.system("bt-agent -c NoInputNoOutput -d")
+
     # listen for incoming client connections
     def listen(self):
-        print("\033[0;33m7. Waiting for connections\033[0m")
+        print("\033[0;33m8. Waiting for connections\033[0m")
 
         # key point: use connect to get the host request for the accept() below
         # it work, I just dont care for having been into it for 2days
@@ -105,6 +110,7 @@ class BTKbDevice():
 
         # this may not work
         # os.system("bluetoothctl connect " + TARGET_ADDRESS)
+        # os.system("bluetoothctl trust " + TARGET_ADDRESS)
 
         self.setup_socket()
 
