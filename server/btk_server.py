@@ -22,6 +22,8 @@ from bluetooth import *
 
 logging.basicConfig(level=logging.DEBUG)
 
+# @todo fill your host mac here manually
+TARGET_ADDRESS = ""
 
 class BTKbDevice():
     # change these constants
@@ -65,7 +67,7 @@ class BTKbDevice():
             "org.bluez", "/org/bluez"), "org.bluez.ProfileManager1")
         manager.RegisterProfile("/org/bluez/hci0", BTKbDevice.UUID, opts)
         print("6. Profile registered ")
-        os.system("hciconfig hci0 class 0x0025C0")
+        os.system("hciconfig hci0 class 0x002540")
 
     # read and return an sdp record from a file
     def read_sdp_service_record(self):
@@ -76,9 +78,7 @@ class BTKbDevice():
             sys.exit("Could not open the sdp record. Exiting...")
         return fh.read()
 
-    # listen for incoming client connections
-    def listen(self):
-        print("\033[0;33m7. Waiting for connections\033[0m")
+    def setup_socket(self):
         self.scontrol = socket.socket(
             socket.AF_BLUETOOTH, socket.SOCK_SEQPACKET, socket.BTPROTO_L2CAP)  # BluetoothSocket(L2CAP)
         self.sinterrupt = socket.socket(
@@ -88,6 +88,25 @@ class BTKbDevice():
         # bind these sockets to a port - port zero to select next available
         self.scontrol.bind((socket.BDADDR_ANY, self.P_CTRL))
         self.sinterrupt.bind((socket.BDADDR_ANY, self.P_INTR))
+
+    # listen for incoming client connections
+    def listen(self):
+        print("\033[0;33m7. Waiting for connections\033[0m")
+
+        # key point: use connect to get the host request for the accept() below
+        # it work, I just dont care for having been into it for 2days
+        self.setup_socket()
+        try:
+            # must be ahead of listen or 'File descriptor in bad state'
+            self.scontrol.connect((TARGET_ADDRESS, self.P_CTRL))
+        except socket.error as err:
+            # it was expect to failed
+            print("Connect failed: "+str(err))
+
+        # this may not work
+        # os.system("bluetoothctl connect " + TARGET_ADDRESS)
+
+        self.setup_socket()
 
         # Start listening on the server sockets
         self.scontrol.listen(5)
@@ -107,6 +126,7 @@ class BTKbDevice():
             self.cinterrupt.send(bytes(message))
         except OSError as err:
             error(err)
+            self.listen()
 
 
 class BTKbService(dbus.service.Object):
@@ -153,6 +173,9 @@ if __name__ == "__main__":
     try:
         if not os.geteuid() == 0:
             sys.exit("Only root can run this script")
+
+        if TARGET_ADDRESS == "":
+            sys.exit("Please fill your host mac address in line 26")
 
         DBusGMainLoop(set_as_default=True)
         myservice = BTKbService()
