@@ -97,11 +97,15 @@ class BtkStringClient():
                     modifiers = [ 0, 0, 0, 0, 0, 0, 1, 0 ]
                 scantablekey = "KEY_" + cu
 
-            scancode = keymap.keytable[scantablekey]
-            self.send_key_down(scancode, modifiers)
-            time.sleep(BtkStringClient.KEY_DOWN_TIME)
-            self.send_key_up()
-            time.sleep(BtkStringClient.KEY_DELAY)
+            try:
+                scancode = keymap.keytable[scantablekey]
+            except KeyError:
+                print("character not found in keytable:", c)
+            else:
+                self.send_key_down(scancode, modifiers)
+                time.sleep(BtkStringClient.KEY_DOWN_TIME)
+                self.send_key_up()
+                time.sleep(BtkStringClient.KEY_DELAY)
 
 
 if __name__ == "__main__":
