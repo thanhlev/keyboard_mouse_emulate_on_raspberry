@@ -162,7 +162,7 @@ class BTKbService(dbus.service.Object):
     @dbus.service.method("org.thanhle.btkbservice", in_signature="ay")
     def send_consumer(self, keys):
         logger.debug("send_consumer: keys=%s", list(keys))
-        state = [0xA1, 3, 0, 0]
+        state = [0xA1, 3, 0, 0, 0]
         state[2] = int(keys[0]) if len(keys) > 0 else 0
         state[3] = int(keys[1]) if len(keys) > 1 else 0
         self.device.send_string(state)
