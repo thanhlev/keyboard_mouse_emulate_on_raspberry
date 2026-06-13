@@ -1,11 +1,9 @@
 #!/usr/bin/python3
-import os  # used to all external commands
-import sys  # used to exit the script
+import sys
+import time
 import dbus
 import dbus.service
 import dbus.mainloop.glib
-import time
-# import thread
 import keymap
 
 
