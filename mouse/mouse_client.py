@@ -1,21 +1,25 @@
 #!/usr/bin/python3
 
-import time
-import re
-from select import select
-import dbus
-import dbus.service
-import dbus.mainloop.glib
-import evdev
-from evdev import ecodes
 import logging
-from logging import debug, info, warning, error
+import re
+import time
+from select import select
+
+import dbus.mainloop.glib
+import dbus.service
+import evdev
 import pyudev
+from evdev import ecodes
 
-logging.basicConfig(level=logging.DEBUG)
+import dbus
+
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+logger = logging.getLogger("mouse_client")
 
 
-class HIDInputDevice():
+class HIDInputDevice:
     inputs = []
     monitor = None
 
@@ -24,7 +28,7 @@ class HIDInputDevice():
         context = pyudev.Context()
         devs = context.list_devices(subsystem="input")
         HIDInputDevice.monitor = pyudev.Monitor.from_netlink(context)
-        HIDInputDevice.monitor.filter_by(subsystem='input')
+        HIDInputDevice.monitor.filter_by(subsystem="input")
         HIDInputDevice.monitor.start()
         for d in [*devs]:
             HIDInputDevice.add_device(d)
@@ -35,18 +39,19 @@ class HIDInputDevice():
             return
         try:
             if "ID_INPUT_MOUSE" in dev.properties:
-                print("detected mouse: " + dev.device_node)
+                logger.info("Detected mouse: %s", dev.device_node)
                 HIDInputDevice.inputs.append(MouseInput(dev.device_node))
         except OSError:
-            error("Failed to connect to %s", dev.device_node)
+            logger.error("Failed to connect to %s", dev.device_node)
 
     @staticmethod
     def remove_device(dev):
         if dev.device_node is None or not re.match(r".*/event\d+", dev.device_node):
             return
         HIDInputDevice.inputs = [
-            i for i in HIDInputDevice.inputs if i.device_node != dev.device_node]
-        print("Disconnected %s" % dev)
+            i for i in HIDInputDevice.inputs if i.device_node != dev.device_node
+        ]
+        logger.info("Disconnected %s", dev)
 
     @staticmethod
     def set_leds_all(ledvalue):
@@ -65,13 +70,17 @@ class HIDInputDevice():
         self.device_node = device_node
         self.device = evdev.InputDevice(device_node)
         self.device.grab()
-        info("Connected %s", self)
+        logger.info("Connected %s", self)
 
     def fileno(self):
         return self.device.fd
 
     def __str__(self):
-        return "%s@%s (%s)" % (self.__class__.__name__, self.device_node, self.device.name)
+        return "%s@%s (%s)" % (
+            self.__class__.__name__,
+            self.device_node,
+            self.device.name,
+        )
 
 
 class MouseInput(HIDInputDevice):
@@ -85,19 +94,20 @@ class MouseInput(HIDInputDevice):
         self.last = 0
         self.bus = dbus.SystemBus()
         self.btkservice = self.bus.get_object(
-            'org.thanhle.btkbservice', '/org/thanhle/btkbservice')
-        self.iface = dbus.Interface(self.btkservice, 'org.thanhle.btkbservice')
+            "org.thanhle.btkbservice", "/org/thanhle/btkbservice"
+        )
+        self.iface = dbus.Interface(self.btkservice, "org.thanhle.btkbservice")
 
     def send_current(self, ir):
         try:
             self.iface.send_mouse(0, bytes(ir))
         except OSError as err:
-            error(err)
+            logger.error("Mouse send failed: %s", err)
 
     def change_state(self, event):
         if event.type == ecodes.EV_SYN:
             current = time.monotonic()
-            diff = 20/1000
+            diff = 20 / 1000
             if current - self.last < diff and not self.change:
                 return
             self.last = current
@@ -111,7 +121,7 @@ class MouseInput(HIDInputDevice):
             self.change = False
             self.send_current(self.state)
         if event.type == ecodes.EV_KEY:
-            debug("Key event %s %d", ecodes.BTN[event.code], event.value)
+            logger.debug("Key event %s %d", ecodes.BTN[event.code], event.value)
             self.change = True
             if event.code >= 272 and event.code <= 276 and event.value < 2:
                 button_no = event.code - 272
@@ -128,13 +138,14 @@ class MouseInput(HIDInputDevice):
                 self.z += event.value
 
     def get_info(self):
-        print("hello")
+        logger.debug("MouseInput info: %s", self)
 
     def set_leds(self, ledvalue):
         pass
 
 
 if __name__ == "__main__":
+    logger.info("Starting mouse client")
     HIDInputDevice.init()
     while True:
         descriptors = [*HIDInputDevice.inputs, HIDInputDevice.monitor]
@@ -144,4 +155,4 @@ if __name__ == "__main__":
                 for event in i.device.read():
                     i.change_state(event)
             except OSError as err:
-                warning(err)
+                logger.warning("Read error: %s", err)
