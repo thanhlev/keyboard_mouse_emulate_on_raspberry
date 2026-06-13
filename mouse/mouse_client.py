@@ -123,7 +123,7 @@ class MouseInput(HIDInputDevice):
         if event.type == ecodes.EV_KEY:
             logger.debug("Key event %s %d", ecodes.BTN[event.code], event.value)
             self.change = True
-            if event.code >= 272 and event.code <= 276 and event.value < 2:
+            if event.code >= 272 and event.code <= 274 and event.value < 2:
                 button_no = event.code - 272
                 if event.value == 1:
                     self.state[0] |= 1 << button_no
