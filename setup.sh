@@ -9,6 +9,7 @@ sudo PIP_BREAK_SYSTEM_PACKAGES=1 pip3 install git+https://github.com/pybluez/pyb
 sudo cp dbus/org.thanhle.btkbservice.conf /etc/dbus-1/system.d
 sudo systemctl restart dbus.service
 
-sudo sed -i '/^ExecStart=/ s/$/ --noplugin=input/' /lib/systemd/system/bluetooth.service
+sudo sed -i '/^ExecStart=/ s/--noplugin=[^ ]*//' /lib/systemd/system/bluetooth.service
+sudo sed -i '/^ExecStart=/ s/$/ --noplugin=input,a2dp,avrcp,sap/' /lib/systemd/system/bluetooth.service
 sudo systemctl daemon-reload
 sudo systemctl restart bluetooth.service

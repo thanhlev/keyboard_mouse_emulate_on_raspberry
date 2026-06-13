@@ -61,7 +61,7 @@ class BTKbDevice:
         )
         manager.RegisterProfile("/org/bluez/hci0", BTKbDevice.UUID, opts)
         logger.info("Profile registered")
-        subprocess.run(["hciconfig", "hci0", "class", "0x002540"], check=False)
+        subprocess.run(["hciconfig", "hci0", "class", "0x0025C0"], check=False)
 
     def read_sdp_service_record(self):
         logger.debug("Reading SDP service record from %s", BTKbDevice.SDP_RECORD_PATH)
