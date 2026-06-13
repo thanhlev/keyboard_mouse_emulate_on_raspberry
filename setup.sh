@@ -10,6 +10,16 @@ sudo cp dbus/org.thanhle.btkbservice.conf /etc/dbus-1/system.d
 sudo systemctl restart dbus.service
 
 sudo sed -i '/^ExecStart=/ s/--noplugin=[^ ]*//' /lib/systemd/system/bluetooth.service
-sudo sed -i '/^ExecStart=/ s/$/ --noplugin=input,a2dp,avrcp,sap/' /lib/systemd/system/bluetooth.service
+sudo sed -i '/^ExecStart=/ s/$/ --noplugin=input/' /lib/systemd/system/bluetooth.service
+
+# Disable audio profile advertisement so hosts don't see device as audio sink.
+# Plugins remain loaded and can be re-enabled by removing these lines.
+sudo mkdir -p /etc/bluetooth
+if ! grep -q "^\[General\]" /etc/bluetooth/main.conf 2>/dev/null; then
+	echo "[General]" | sudo tee -a /etc/bluetooth/main.conf > /dev/null
+fi
+sudo sed -i '/^Disable\s*=/d' /etc/bluetooth/main.conf
+sudo sed -i '/^\[General\]/a Disable=Source,Sink,Media' /etc/bluetooth/main.conf
+
 sudo systemctl daemon-reload
 sudo systemctl restart bluetooth.service
