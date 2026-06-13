@@ -1,20 +1,19 @@
 #!/usr/bin/python3
 
-import os
 import sys
 import dbus
-import dbus.service
 import dbus.mainloop.glib
+from logging import error
 
 
 class MouseClient():
 	def __init__(self):
-		super().__init__()
 		self.state = [0, 0, 0, 0]
 		self.bus = dbus.SystemBus()
 		self.btkservice = self.bus.get_object(
 			'org.thanhle.btkbservice', '/org/thanhle/btkbservice')
 		self.iface = dbus.Interface(self.btkservice, 'org.thanhle.btkbservice')
+
 	def send_current(self):
 		try:
 			self.iface.send_mouse(0, bytes(self.state))

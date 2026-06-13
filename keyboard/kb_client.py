@@ -4,15 +4,13 @@
 # keyboard copy client.
 # Reads local key events and forwards them to the btk_server DBUS service
 #
-import os  # used to all external commands
-import sys  # used to exit the script
+import time
 import dbus
 import dbus.service
 import dbus.mainloop.glib
-import time
-import evdev  # used to get input from the keyboard
-from evdev import *
-import keymap  # used to map evdev input to hid keodes
+import evdev
+from evdev import ecodes, InputDevice
+import keymap
 
 
 # Define a client to listen to local key events
@@ -48,18 +46,14 @@ class Keyboard():
             'org.thanhle.btkbservice', '/org/thanhle/btkbservice')
         self.iface = dbus.Interface(self.btkservice, 'org.thanhle.btkbservice')
         print("waiting for keyboard")
-        # keep trying to key a keyboard
-        have_dev = False
-        while have_dev == False:
+        while True:
             try:
-                # try and get a keyboard - should always be event0 as
-                # we're only plugging one thing in
                 self.dev = InputDevice("/dev/input/event0")
-                have_dev = True
+                print("found a keyboard")
+                break
             except OSError:
                 print("Keyboard not found, waiting 3 seconds and retrying")
                 time.sleep(3)
-            print("found a keyboard")
 
     def change_state(self, event):
         evdev_code = ecodes.KEY[event.code]

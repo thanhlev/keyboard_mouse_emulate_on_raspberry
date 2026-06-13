@@ -1,0 +1,5 @@
+dbus-python>=1.2.0
+evdev>=1.4.0
+PyGObject>=3.42.0
+pyudev>=0.22.0
+pybluez>=0.23

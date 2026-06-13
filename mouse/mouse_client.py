@@ -1,66 +1,64 @@
 #!/usr/bin/python3
 
+import time
+import re
+from select import select
 import dbus
 import dbus.service
 import dbus.mainloop.glib
-import time
 import evdev
-from evdev import *
+from evdev import ecodes
 import logging
 from logging import debug, info, warning, error
-import os
-import sys
-from select import select
 import pyudev
-import re
 
 logging.basicConfig(level=logging.DEBUG)
 
 
-class InputDevice():
+class HIDInputDevice():
     inputs = []
+    monitor = None
 
     @staticmethod
     def init():
         context = pyudev.Context()
         devs = context.list_devices(subsystem="input")
-        InputDevice.monitor = pyudev.Monitor.from_netlink(context)
-        InputDevice.monitor.filter_by(subsystem='input')
-        InputDevice.monitor.start()
+        HIDInputDevice.monitor = pyudev.Monitor.from_netlink(context)
+        HIDInputDevice.monitor.filter_by(subsystem='input')
+        HIDInputDevice.monitor.start()
         for d in [*devs]:
-            InputDevice.add_device(d)
+            HIDInputDevice.add_device(d)
 
     @staticmethod
     def add_device(dev):
-        if dev.device_node == None or not re.match(".*/event\\d+", dev.device_node):
+        if dev.device_node is None or not re.match(r".*/event\d+", dev.device_node):
             return
         try:
             if "ID_INPUT_MOUSE" in dev.properties:
                 print("detected mouse: " + dev.device_node)
-                InputDevice.inputs.append(MouseInput(dev.device_node))
+                HIDInputDevice.inputs.append(MouseInput(dev.device_node))
         except OSError:
             error("Failed to connect to %s", dev.device_node)
 
     @staticmethod
     def remove_device(dev):
-        if dev.device_node == None or not re.match(".*/event\\d+", dev.device_node):
+        if dev.device_node is None or not re.match(r".*/event\d+", dev.device_node):
             return
-        InputDevice.inputs = list(
-            filter(lambda i: i.device_node != dev.device_node, InputDevice.inputs))
-        print("Disconnected %s", dev)
+        HIDInputDevice.inputs = [
+            i for i in HIDInputDevice.inputs if i.device_node != dev.device_node]
+        print("Disconnected %s" % dev)
 
     @staticmethod
     def set_leds_all(ledvalue):
-        for dev in InputDevice.inputs:
+        for dev in HIDInputDevice.inputs:
             dev.set_leds(ledvalue)
 
     @staticmethod
     def grab(on):
-        if on:
-            for dev in InputDevice.inputs:
+        for dev in HIDInputDevice.inputs:
+            if on:
                 dev.device.grab()
-        else:
-            for dev in InputDevice.inputs:
+            else:
                 dev.device.ungrab()
 
     def __init__(self, device_node):
@@ -76,7 +74,7 @@ class InputDevice():
         return "%s@%s (%s)" % (self.__class__.__name__, self.device_node, self.device.name)
 
 
-class MouseInput(InputDevice):
+class MouseInput(HIDInputDevice):
     def __init__(self, device_node):
         super().__init__(device_node)
         self.state = [0, 0, 0, 0]
@@ -89,8 +87,6 @@ class MouseInput(InputDevice):
         self.btkservice = self.bus.get_object(
             'org.thanhle.btkbservice', '/org/thanhle/btkbservice')
         self.iface = dbus.Interface(self.btkservice, 'org.thanhle.btkbservice')
-        self.mouse_delay = 20 / 1000
-        self.mouse_speed = 1
 
     def send_current(self, ir):
         try:
@@ -139,11 +135,11 @@ class MouseInput(InputDevice):
 
 
 if __name__ == "__main__":
-    InputDevice.init()
+    HIDInputDevice.init()
     while True:
-        desctiptors = [*InputDevice.inputs, InputDevice.monitor]
-        r = select(desctiptors, [], [])
-        for i in InputDevice.inputs:
+        descriptors = [*HIDInputDevice.inputs, HIDInputDevice.monitor]
+        r = select(descriptors, [], [])
+        for i in HIDInputDevice.inputs:
             try:
                 for event in i.device.read():
                     i.change_state(event)
